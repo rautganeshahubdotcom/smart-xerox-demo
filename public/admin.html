@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-6">
+
+    <div class="max-w-6xl mx-auto">
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-extrabold text-gray-800">Print Queue Dashboard</h1>
+                <p class="text-gray-500 mt-1">Live overview of incoming customer prints.</p>
+            </div>
+            <div class="flex items-center space-x-2 bg-green-100 text-green-700 px-4 py-2 rounded-lg font-semibold text-sm">
+                <span class="relative flex h-3 w-3">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                </span>
+                <span>Live Updates Active</span>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Pickup Code</th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">File Name</th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Details</th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Amount Paid</th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Time</th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersTable" class="bg-white divide-y divide-gray-200">
+                    <!-- Orders will be injected here via JS -->
+                    <tr>
+                        <td colspan="6" class="px-6 py-10 text-center text-gray-500">Loading incoming orders...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        async function fetchOrders() {
+            try {
+                const response = await fetch('/api/admin/orders');
+                const orders = await response.json();
+                
+                const tbody = document.getElementById('ordersTable');
+                
+                if (orders.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-10 text-center text-gray-500">No paid print jobs yet today.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = orders.map(order => {
+                    const timeString = new Date(order.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    
+                    // Style the code block
+                    const codeBlock = `<span class="bg-slate-800 text-white font-mono font-bold px-3 py-1 rounded text-lg">${order.pickupCode}</span>`;
+                    
+                    // Format Details
+                    const typeColor = order.settings.colorMode === 'color' ? 'text-purple-600 bg-purple-100' : 'text-gray-600 bg-gray-100';
+                    const detailsStr = `
+                        <div class="text-sm font-medium text-gray-900">${order.pageCount} Pages</div>
+                        <div class="mt-1 flex space-x-1">
+                            <span class="px-2 py-0.5 rounded text-xs font-semibold ${typeColor}">${order.settings.colorMode.toUpperCase()}</span>
+                            <span class="px-2 py-0.5 rounded text-xs font-semibold text-blue-600 bg-blue-100">${order.settings.copies}x Copies</span>
+                        </div>
+                    `;
+
+                    // Format Status
+                    let statusBadge = '';
+                    if (order.status === 'printing_completed') {
+                        statusBadge = `<span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Printed</span>`;
+                    } else if (order.status === 'paid_and_printing') {
+                        statusBadge = `<span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 animate-pulse">Printing Now...</span>`;
+                    } else {
+                        statusBadge = `<span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Check Printer</span>`;
+                    }
+
+                    return `
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">${codeBlock}</td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-semibold text-gray-900 truncate max-w-xs" title="${order.originalName}">${order.originalName}</div>
+                                <div class="text-xs text-gray-500">ID: ${order.razorpayOrderId}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">${detailsStr}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-bold text-gray-900">₹${order.totalAmount}</div>
+                                <div class="text-xs text-green-600 font-medium">Paid</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${timeString}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${statusBadge}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+            } catch (err) {
+                console.error("Failed to fetch orders:", err);
+            }
+        }
+
+        // Fetch immediately, then every 3 seconds
+        fetchOrders();
+        setInterval(fetchOrders, 3000);
+    </script>
+</body>
+</html>

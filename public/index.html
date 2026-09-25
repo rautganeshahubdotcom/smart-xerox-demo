@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Xerox Self-Service</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body class="bg-slate-50 flex items-center justify-center min-h-screen">
+
+    <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md mx-4 my-8">
+        
+        <div class="text-center mb-6">
+            <div class="bg-blue-100 text-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+            </div>
+            <h1 class="text-2xl font-extrabold text-slate-800">Smart Print Kiosk</h1>
+            <p class="text-slate-500 mt-2 text-sm">Upload, customize, and print instantly.</p>
+        </div>
+
+        <!-- STEP 1: UPLOAD -->
+        <div id="step1">
+            <form id="uploadForm" class="space-y-4">
+                <div class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer" id="dropzone" onclick="document.getElementById('document').click()">
+                    <input type="file" id="document" name="document" accept=".pdf,.png,.jpg,.jpeg" class="hidden" required>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-slate-400 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <span class="text-blue-600 font-bold hover:underline">Tap to select document</span>
+                    <p class="text-xs text-slate-500 mt-2">Supports PDF, JPG, PNG (Max 10MB)</p>
+                </div>
+            </form>
+            <div id="uploadingIndicator" class="hidden mt-4 text-center text-blue-600 font-semibold animate-pulse">
+                Analyzing document...
+            </div>
+        </div>
+
+        <!-- STEP 2: SETTINGS & PAYMENT -->
+        <div id="step2" class="hidden space-y-5">
+            <div class="bg-slate-100 p-4 rounded-lg flex items-center justify-between">
+                <div class="truncate pr-4 flex-1">
+                    <p class="text-sm font-bold text-slate-700 truncate" id="displayFileName">file.pdf</p>
+                    <p class="text-xs text-slate-500" id="displayPageCount">1 Page(s)</p>
+                </div>
+                <button onclick="resetFlow()" class="text-red-500 hover:text-red-700 text-sm font-medium whitespace-nowrap">Change File</button>
+            </div>
+
+            <form id="settingsForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Color Mode</label>
+                    <select id="colorMode" class="w-full border border-slate-300 rounded-lg p-3 outline-none focus:border-blue-500 bg-white">
+                        <option value="bw">Black & White (₹2 / page)</option>
+                        <option value="color">Full Color (₹10 / page)</option>
+                    </select>
+                </div>
+
+                <div class="flex space-x-4">
+                    <div class="flex-1">
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Paper Size</label>
+                        <select id="paperSize" class="w-full border border-slate-300 rounded-lg p-3 outline-none focus:border-blue-500 bg-white">
+                            <option value="a4">A4 Standard</option>
+                            <option value="letter">Letter</option>
+                        </select>
+                    </div>
+                    <div class="w-24">
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Copies</label>
+                        <input type="number" id="copies" value="1" min="1" max="50" class="w-full border border-slate-300 rounded-lg p-3 outline-none focus:border-blue-500 text-center">
+                    </div>
+                </div>
+
+                <div class="bg-blue-50 rounded-lg p-4 mt-2">
+                    <div class="flex justify-between items-center text-sm mb-1 text-slate-600">
+                        <span>Pages:</span>
+                        <span id="calcPages" class="font-bold">1</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm mb-1 text-slate-600">
+                        <span>Cost per copy:</span>
+                        <span id="calcCost" class="font-bold">₹2</span>
+                    </div>
+                    <hr class="my-2 border-blue-200">
+                    <div class="flex justify-between items-center text-lg">
+                        <span class="text-slate-800 font-bold">Total Amount:</span>
+                        <span id="calcTotal" class="font-extrabold text-blue-700">₹2</span>
+                    </div>
+                </div>
+
+                <button type="submit" id="payBtn" class="w-full bg-blue-600 text-white font-bold py-4 px-4 rounded-xl hover:bg-blue-700 transition duration-200 shadow-md">
+                    Pay <span id="btnTotal">₹2</span> & Print
+                </button>
+            </form>
+        </div>
+
+        <!-- STEP 3: SUCCESS & PICKUP CODE -->
+        <div id="step3" class="hidden text-center py-6">
+            <div class="bg-green-100 text-green-600 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+            </div>
+            <h2 class="text-2xl font-bold text-slate-800 mb-2">Printing Started!</h2>
+            <p class="text-slate-600 mb-6">Show this pickup code at the counter to collect your prints.</p>
+            
+            <div class="bg-slate-800 rounded-2xl p-6 shadow-inner inline-block w-full">
+                <p class="text-slate-400 text-xs uppercase tracking-widest font-semibold mb-1">Your Pickup Code</p>
+                <h1 id="pickupCodeDisplay" class="text-5xl font-black text-white tracking-wider">--</h1>
+            </div>
+
+            <button onclick="resetFlow()" class="mt-8 text-blue-600 font-semibold hover:underline">Print another document</button>
+        </div>
+
+    </div>
+
+    <script>
+        // State variables
+        let currentTempId = null;
+        let currentPageCount = 1;
+
+        // DOM Elements
+        const step1 = document.getElementById('step1');
+        const step2 = document.getElementById('step2');
+        const step3 = document.getElementById('step3');
+        const fileInput = document.getElementById('document');
+        const uploadingIndicator = document.getElementById('uploadingIndicator');
+        
+        const colorMode = document.getElementById('colorMode');
+        const copies = document.getElementById('copies');
+        const calcPages = document.getElementById('calcPages');
+        const calcCost = document.getElementById('calcCost');
+        const calcTotal = document.getElementById('calcTotal');
+        const btnTotal = document.getElementById('btnTotal');
+
+        // Handle File Selection and Upload
+        fileInput.addEventListener('change', async (e) => {
+            if (e.target.files.length > 0) {
+                const file = e.target.files[0];
+                
+                // Show uploading state
+                document.getElementById('uploadForm').classList.add('opacity-50', 'pointer-events-none');
+                uploadingIndicator.classList.remove('hidden');
+
+                const formData = new FormData();
+                formData.append('document', file);
+
+                try {
+                    const response = await fetch('/api/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await response.json();
+                    
+                    if (data.error) throw new Error(data.error);
+
+                    // Save session data
+                    currentTempId = data.tempId;
+                    currentPageCount = data.pageCount;
+
+                    // Update UI
+                    document.getElementById('displayFileName').textContent = data.fileName;
+                    document.getElementById('displayPageCount').textContent = `${data.pageCount} Page(s) detected`;
+                    
+                    updatePricing(); // Initial calculation
+
+                    // Move to Step 2
+                    step1.classList.add('hidden');
+                    step2.classList.remove('hidden');
+                } catch (error) {
+                    alert("Error uploading file. Please try again.");
+                } finally {
+                    document.getElementById('uploadForm').classList.remove('opacity-50', 'pointer-events-none');
+                    uploadingIndicator.classList.add('hidden');
+                }
+            }
+        });
+
+        // Real-time Pricing Calculation
+        function updatePricing() {
+            const isColor = colorMode.value === 'color';
+            const pricePerPage = isColor ? 10 : 2;
+            const numCopies = parseInt(copies.value) || 1;
+
+            const costPerCopy = currentPageCount * pricePerPage;
+            const totalAmount = costPerCopy * numCopies;
+
+            calcPages.textContent = currentPageCount;
+            calcCost.textContent = `₹${costPerCopy}`;
+            calcTotal.textContent = `₹${totalAmount}`;
+            btnTotal.textContent = `₹${totalAmount}`;
+        }
+
+        colorMode.addEventListener('change', updatePricing);
+        copies.addEventListener('input', updatePricing);
+
+        // Handle Payment Submit
+        document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const payBtn = document.getElementById('payBtn');
+            payBtn.innerHTML = 'Connecting to Bank...';
+            payBtn.disabled = true;
+
+            try {
+                // Create Order on Server
+                const orderResponse = await fetch('/api/create-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tempId: currentTempId,
+                        colorMode: colorMode.value,
+                        paperSize: document.getElementById('paperSize').value,
+                        copies: copies.value
+                    })
+                });
+                const orderData = await orderResponse.json();
+                if (orderData.error) throw new Error(orderData.error);
+
+                // Open Razorpay
+                const options = {
+                    "key": orderData.key,
+                    "amount": orderData.amount,
+                    "currency": orderData.currency,
+                    "name": "Xerox Self-Service",
+                    "description": "Print Order Payment",
+                    "order_id": orderData.order_id,
+                    "handler": async function (response) {
+                        payBtn.innerHTML = 'Verifying Payment...';
+                        
+                        // Verify Payment
+                        const verifyRes = await fetch('/api/verify-payment', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_signature: response.razorpay_signature
+                            })
+                        });
+
+                        const verifyData = await verifyRes.json();
+                        
+                        if (verifyData.success) {
+                            // Move to Step 3
+                            document.getElementById('pickupCodeDisplay').textContent = verifyData.pickupCode;
+                            step2.classList.add('hidden');
+                            step3.classList.remove('hidden');
+                        } else {
+                            alert("Payment verification failed: " + verifyData.message);
+                            resetBtn();
+                        }
+                    },
+                    "theme": { "color": "#2563EB" }
+                };
+                
+                const rzp = new Razorpay(options);
+                rzp.open();
+                
+                rzp.on('payment.failed', function (response){
+                    alert("Payment Failed. Please try again.");
+                    resetBtn();
+                });
+
+            } catch (err) {
+                alert("Error: " + err.message);
+                resetBtn();
+            }
+
+            function resetBtn() {
+                payBtn.innerHTML = `Pay <span id="btnTotal">₹${document.getElementById('calcTotal').textContent.replace('₹','')}</span> & Print`;
+                payBtn.disabled = false;
+            }
+        });
+
+        // Reset Flow
+        function resetFlow() {
+            fileInput.value = '';
+            currentTempId = null;
+            currentPageCount = 1;
+            copies.value = '1';
+            colorMode.value = 'bw';
+            
+            step3.classList.add('hidden');
+            step2.classList.add('hidden');
+            step1.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
