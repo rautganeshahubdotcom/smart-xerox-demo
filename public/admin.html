@@ -6,110 +6,167 @@
     <title>Shop Admin Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen p-6">
+<body class="bg-gray-100 min-h-screen">
 
-    <div class="max-w-6xl mx-auto">
-        <div class="flex justify-between items-center mb-8">
-            <div>
-                <h1 class="text-3xl font-extrabold text-gray-800">Print Queue Dashboard</h1>
-                <p class="text-gray-500 mt-1">Live overview of incoming customer prints.</p>
-            </div>
-            <div class="flex items-center space-x-2 bg-green-100 text-green-700 px-4 py-2 rounded-lg font-semibold text-sm">
-                <span class="relative flex h-3 w-3">
-                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                </span>
-                <span>Live Updates Active</span>
-            </div>
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="flex items-center justify-center min-h-screen">
+        <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm mx-4 text-center">
+            <div class="bg-slate-800 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-black">⚙️</div>
+            <h1 class="text-xl font-bold text-gray-800 mb-1">Admin Login</h1>
+            <p class="text-gray-500 text-sm mb-6">Enter the shop admin password to continue.</p>
+            <input type="password" id="adminPassword" placeholder="Enter Password" 
+                   class="w-full border border-gray-300 rounded-lg p-3 mb-4 outline-none focus:border-blue-500 text-center">
+            <button onclick="attemptLogin()" class="w-full bg-slate-800 text-white font-bold py-3 rounded-xl hover:bg-slate-900 transition">
+                Log In
+            </button>
+            <p id="loginError" class="text-red-500 text-sm mt-3 hidden">Wrong password. Try again.</p>
         </div>
+    </div>
 
-        <div class="bg-white rounded-xl shadow overflow-hidden">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Pickup Code</th>
-                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">File Name</th>
-                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Details</th>
-                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Amount Paid</th>
-                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Time</th>
-                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
-                    </tr>
-                </thead>
-                <tbody id="ordersTable" class="bg-white divide-y divide-gray-200">
-                    <!-- Orders will be injected here via JS -->
-                    <tr>
-                        <td colspan="6" class="px-6 py-10 text-center text-gray-500">Loading incoming orders...</td>
-                    </tr>
-                </tbody>
-            </table>
+    <!-- DASHBOARD (hidden until logged in) -->
+    <div id="dashboardScreen" class="hidden p-6">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h1 class="text-3xl font-extrabold text-gray-800">Print Queue Dashboard</h1>
+                    <p class="text-gray-500 mt-1">Live overview of incoming customer prints.</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2 bg-green-100 text-green-700 px-4 py-2 rounded-lg font-semibold text-sm">
+                        <span class="relative flex h-3 w-3">
+                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                          <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                        </span>
+                        <span>Live</span>
+                    </div>
+                    <div class="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg font-bold text-sm">
+                        Today's Revenue: <span id="totalRevenue">₹0</span>
+                    </div>
+                    <div class="bg-purple-100 text-purple-700 px-4 py-2 rounded-lg font-bold text-sm">
+                        Total Orders: <span id="totalOrders">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow overflow-hidden">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Pickup Code</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">File Name</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Details</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Amount Paid</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Time</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ordersTable" class="bg-white divide-y divide-gray-200">
+                        <tr><td colspan="7" class="px-6 py-10 text-center text-gray-500">Waiting for orders...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <script>
+        let adminPassword = '';
+
+        async function attemptLogin() {
+            adminPassword = document.getElementById('adminPassword').value;
+            
+            try {
+                const response = await fetch('/api/admin/orders?password=' + encodeURIComponent(adminPassword));
+                if (response.ok) {
+                    document.getElementById('loginScreen').classList.add('hidden');
+                    document.getElementById('dashboardScreen').classList.remove('hidden');
+                    fetchOrders();
+                    setInterval(fetchOrders, 3000); // Refresh every 3 seconds
+                } else {
+                    document.getElementById('loginError').classList.remove('hidden');
+                }
+            } catch (err) {
+                alert("Could not connect to the server.");
+            }
+        }
+
+        // Allow Enter key for password
+        document.getElementById('adminPassword').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') attemptLogin();
+        });
+
+        async function markCollected(pickupCode) {
+            await fetch('/api/admin/mark-collected?password=' + encodeURIComponent(adminPassword), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPassword },
+                body: JSON.stringify({ pickupCode })
+            });
+            fetchOrders();
+        }
+
         async function fetchOrders() {
             try {
-                const response = await fetch('/api/admin/orders');
+                const response = await fetch('/api/admin/orders', {
+                    headers: { 'x-admin-password': adminPassword }
+                });
                 const orders = await response.json();
-                
                 const tbody = document.getElementById('ordersTable');
-                
+
+                // Update stats
+                document.getElementById('totalOrders').textContent = orders.length;
+                document.getElementById('totalRevenue').textContent = '₹' + orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+
                 if (orders.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-10 text-center text-gray-500">No paid print jobs yet today.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="7" class="px-6 py-10 text-center text-gray-500">No paid print jobs yet.</td></tr>`;
                     return;
                 }
 
                 tbody.innerHTML = orders.map(order => {
-                    const timeString = new Date(order.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                    
-                    // Style the code block
-                    const codeBlock = `<span class="bg-slate-800 text-white font-mono font-bold px-3 py-1 rounded text-lg">${order.pickupCode}</span>`;
-                    
-                    // Format Details
+                    const timeString = new Date(order.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                     const typeColor = order.settings.colorMode === 'color' ? 'text-purple-600 bg-purple-100' : 'text-gray-600 bg-gray-100';
-                    const detailsStr = `
-                        <div class="text-sm font-medium text-gray-900">${order.pageCount} Pages</div>
-                        <div class="mt-1 flex space-x-1">
-                            <span class="px-2 py-0.5 rounded text-xs font-semibold ${typeColor}">${order.settings.colorMode.toUpperCase()}</span>
-                            <span class="px-2 py-0.5 rounded text-xs font-semibold text-blue-600 bg-blue-100">${order.settings.copies}x Copies</span>
-                        </div>
-                    `;
+                    const sidesLabel = order.settings.sides === 'double' ? 'Double Side' : 'Single Side';
 
-                    // Format Status
                     let statusBadge = '';
-                    if (order.status === 'printing_completed') {
-                        statusBadge = `<span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Printed</span>`;
-                    } else if (order.status === 'paid_and_printing') {
-                        statusBadge = `<span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 animate-pulse">Printing Now...</span>`;
+                    let actionBtn = '';
+                    if (order.status === 'collected') {
+                        statusBadge = `<span class="px-3 py-1 text-xs font-semibold rounded-full bg-gray-200 text-gray-600">Collected ✔</span>`;
+                        actionBtn = '';
+                    } else if (order.status === 'printing_completed' || order.status === 'print_queued') {
+                        statusBadge = `<span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Ready</span>`;
+                        actionBtn = `<button onclick="markCollected('${order.pickupCode}')" class="bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-green-700 transition">Mark Collected</button>`;
                     } else {
-                        statusBadge = `<span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Check Printer</span>`;
+                        statusBadge = `<span class="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 animate-pulse">Printing...</span>`;
+                        actionBtn = `<button onclick="markCollected('${order.pickupCode}')" class="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-blue-700 transition">Mark Collected</button>`;
                     }
 
                     return `
                         <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="px-6 py-4 whitespace-nowrap">${codeBlock}</td>
+                            <td class="px-6 py-4"><span class="bg-slate-800 text-white font-mono font-bold px-3 py-1.5 rounded text-lg tracking-wider">${order.pickupCode}</span></td>
                             <td class="px-6 py-4">
-                                <div class="text-sm font-semibold text-gray-900 truncate max-w-xs" title="${order.originalName}">${order.originalName}</div>
-                                <div class="text-xs text-gray-500">ID: ${order.razorpayOrderId}</div>
+                                <div class="text-sm font-semibold text-gray-900 truncate max-w-xs">${order.originalName}</div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">${detailsStr}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-medium text-gray-900">${order.pageCount} Pages</div>
+                                <div class="mt-1 flex flex-wrap gap-1">
+                                    <span class="px-2 py-0.5 rounded text-xs font-semibold ${typeColor}">${order.settings.colorMode === 'color' ? 'COLOR' : 'B&W'}</span>
+                                    <span class="px-2 py-0.5 rounded text-xs font-semibold text-blue-600 bg-blue-100">${order.settings.copies}x</span>
+                                    <span class="px-2 py-0.5 rounded text-xs font-semibold text-orange-600 bg-orange-100">${sidesLabel}</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
                                 <div class="text-sm font-bold text-gray-900">₹${order.totalAmount}</div>
-                                <div class="text-xs text-green-600 font-medium">Paid</div>
+                                <div class="text-xs text-green-600 font-medium">Paid ✓</div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${timeString}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">${statusBadge}</td>
+                            <td class="px-6 py-4 text-sm text-gray-500">${timeString}</td>
+                            <td class="px-6 py-4">${statusBadge}</td>
+                            <td class="px-6 py-4">${actionBtn}</td>
                         </tr>
                     `;
                 }).join('');
-
             } catch (err) {
                 console.error("Failed to fetch orders:", err);
             }
         }
-
-        // Fetch immediately, then every 3 seconds
-        fetchOrders();
-        setInterval(fetchOrders, 3000);
     </script>
 </body>
 </html>
