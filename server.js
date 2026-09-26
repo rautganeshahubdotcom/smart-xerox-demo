@@ -26,9 +26,8 @@ function rateLimiter(req, res, next) {
     const ip = req.ip || req.connection.remoteAddress;
     const now = Date.now();
     if (!requestCounts[ip]) requestCounts[ip] = [];
-    // Remove entries older than 1 minute
     requestCounts[ip] = requestCounts[ip].filter(t => now - t < 60000);
-    if (requestCounts[ip].length > 30) { // Max 30 requests per minute
+    if (requestCounts[ip].length > 30) {
         return res.status(429).json({ error: 'Too many requests. Please wait a moment.' });
     }
     requestCounts[ip].push(now);
@@ -42,7 +41,6 @@ app.use('/api/', rateLimiter);
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 
 app.use('/admin.html', (req, res, next) => {
-    // Admin page itself is served, but API is protected
     next();
 });
 
@@ -77,12 +75,12 @@ const razorpay = new Razorpay({
     key_secret: process.env.RAZORPAY_KEY_SECRET
 });
 
-// Global store for print jobs
+// Global store for print jobs & lifetime stats
 global.printJobs = {};
+global.shopStats = { revenue: 0, orders: 0, pages: 0 };
 
-// Track used pickup codes to NEVER repeat
+// Track used pickup codes
 const usedCodes = new Set();
-
 function generatePickupCode() {
     const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     const numbers = "0123456789";
@@ -93,10 +91,7 @@ function generatePickupCode() {
         for (let i = 0; i < 2; i++) code += letters.charAt(Math.floor(Math.random() * letters.length));
         for (let i = 0; i < 2; i++) code += numbers.charAt(Math.floor(Math.random() * numbers.length));
         attempts++;
-        // Safety: if somehow all 67600 codes are used, add extra digit
-        if (attempts > 100) {
-            code += numbers.charAt(Math.floor(Math.random() * numbers.length));
-        }
+        if (attempts > 100) code += numbers.charAt(Math.floor(Math.random() * numbers.length));
     } while (usedCodes.has(code));
     
     usedCodes.add(code);
@@ -120,9 +115,7 @@ app.post('/api/upload', upload.single('document'), async (req, res) => {
         }
     }
 
-    // Use crypto for a secure unique tempId
     const tempId = crypto.randomBytes(8).toString('hex');
-
     global.printJobs[tempId] = {
         tempId,
         filePath: req.file.path,
@@ -138,26 +131,22 @@ app.post('/api/upload', upload.single('document'), async (req, res) => {
 });
 
 // ==========================================
-// 2. Set Preferences & Create Payment Order
+// 2. Create Payment Order
 // ==========================================
 app.post('/api/create-order', async (req, res) => {
     const { tempId, colorMode, paperSize, copies, sides } = req.body;
     const job = global.printJobs[tempId];
 
     if (!job) return res.status(404).json({ error: 'Document session expired. Please upload again.' });
-    if (job.razorpayOrderId) return res.status(400).json({ error: 'Payment already created for this upload. Please upload a new file.' });
+    if (job.razorpayOrderId) return res.status(400).json({ error: 'Payment already created.' });
 
-    // Dynamic Pricing
     const pricePerPage = colorMode === 'color' ? 10 : 2;
-    const totalCopies = Math.min(Math.max(parseInt(copies) || 1, 1), 50); // Clamp 1-50
-    const printSides = sides === 'double' ? 'double' : 'single';
-    
-    // If double-sided, effective printed sheets = ceil(pages/2), but charge per page
+    const totalCopies = Math.min(Math.max(parseInt(copies) || 1, 1), 50);
     const totalAmount = job.pageCount * pricePerPage * totalCopies;
 
     if (totalAmount < 1) return res.status(400).json({ error: 'Invalid amount calculated.' });
 
-    job.settings = { colorMode, paperSize, copies: totalCopies, sides: printSides };
+    job.settings = { colorMode, paperSize, copies: totalCopies, sides };
     job.totalAmount = totalAmount;
 
     try {
@@ -168,7 +157,7 @@ app.post('/api/create-order', async (req, res) => {
         });
 
         job.razorpayOrderId = order.id;
-        global.printJobs[order.id] = job; // Also index by Razorpay order ID
+        global.printJobs[order.id] = job;
 
         res.json({
             order_id: order.id,
@@ -183,7 +172,7 @@ app.post('/api/create-order', async (req, res) => {
 });
 
 // ==========================================
-// 3. Verify Payment & Issue Pickup Code
+// 3. Verify Payment & Update Stats
 // ==========================================
 app.post('/api/verify-payment', async (req, res) => {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
@@ -192,7 +181,6 @@ app.post('/api/verify-payment', async (req, res) => {
         return res.status(400).json({ success: false, message: 'Missing payment details.' });
     }
 
-    // Cryptographic signature verification
     const body = razorpay_order_id + "|" + razorpay_payment_id;
     const expectedSignature = crypto
         .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
@@ -200,28 +188,25 @@ app.post('/api/verify-payment', async (req, res) => {
         .digest('hex');
 
     if (expectedSignature !== razorpay_signature) {
-        console.error("❌ Invalid payment signature - possible tampering attempt!");
-        return res.status(400).json({ success: false, message: 'Invalid payment signature.' });
+        return res.status(400).json({ success: false, message: 'Invalid signature.' });
     }
 
     const job = global.printJobs[razorpay_order_id];
-    if (!job) {
-        return res.status(404).json({ success: false, message: 'Job not found.' });
-    }
-
-    // Prevent double-processing
-    if (job.pickupCode) {
-        return res.json({ success: true, pickupCode: job.pickupCode, message: 'Already processed.' });
-    }
+    if (!job) return res.status(404).json({ success: false, message: 'Job not found.' });
+    if (job.pickupCode) return res.json({ success: true, pickupCode: job.pickupCode });
 
     job.status = 'paid_and_printing';
-    job.pickupCode = generatePickupCode(); // Guaranteed unique
+    job.pickupCode = generatePickupCode();
     job.paymentId = razorpay_payment_id;
     job.paidAt = new Date().toISOString();
 
-    console.log(`✅ Payment confirmed! Code: ${job.pickupCode} | File: ${job.originalName} | ₹${job.totalAmount}`);
+    // Update shop statistics
+    global.shopStats.revenue += job.totalAmount;
+    global.shopStats.orders += 1;
+    global.shopStats.pages += (job.pageCount * job.settings.copies);
 
-    // Trigger print (non-blocking)
+    console.log(`✅ Paid! Code: ${job.pickupCode} | ₹${job.totalAmount}`);
+
     printDocument(job.filePath).then(success => {
         job.status = success ? 'printing_completed' : 'print_queued';
     });
@@ -230,22 +215,22 @@ app.post('/api/verify-payment', async (req, res) => {
 });
 
 // ==========================================
-// 4. Admin API: Get all paid orders
+// 4. Admin API: Dashboard Data
 // ==========================================
 app.get('/api/admin/orders', (req, res) => {
     const activeOrders = Object.values(global.printJobs)
-        .filter(job => job.pickupCode) // Only jobs that have been paid
-        .filter((job, index, self) =>
-            // Deduplicate: keep only one entry per pickupCode
-            index === self.findIndex(j => j.pickupCode === job.pickupCode)
-        )
+        .filter(job => job.pickupCode)
+        .filter((job, index, self) => index === self.findIndex(j => j.pickupCode === job.pickupCode))
         .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-    res.json(activeOrders);
+    res.json({
+        stats: global.shopStats,
+        orders: activeOrders
+    });
 });
 
 // ==========================================
-// 5. Admin API: Mark order as collected
+// 5. Admin API: Mark collected
 // ==========================================
 app.post('/api/admin/mark-collected', (req, res) => {
     const { pickupCode } = req.body;
@@ -258,24 +243,36 @@ app.post('/api/admin/mark-collected', (req, res) => {
     }
 });
 
-// Error handler for multer
+// ==========================================
+// 6. Admin API: Manual Reprint
+// ==========================================
+app.post('/api/admin/reprint', (req, res) => {
+    const { pickupCode } = req.body;
+    const job = Object.values(global.printJobs).find(j => j.pickupCode === pickupCode);
+    if (job) {
+        printDocument(job.filePath).then(success => {
+            job.status = success ? 'printing_completed' : 'print_queued';
+        });
+        res.json({ success: true });
+    } else {
+        res.status(404).json({ error: 'Order not found.' });
+    }
+});
+
+// Error handler
 app.use((err, req, res, next) => {
-    if (err instanceof multer.MulterError) {
-        if (err.code === 'LIMIT_FILE_SIZE') {
-            return res.status(400).json({ error: 'File too large. Maximum size is 10MB.' });
-        }
+    if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ error: 'File too large. Max 10MB.' });
     }
-    if (err.message) {
-        return res.status(400).json({ error: err.message });
-    }
+    if (err.message) return res.status(400).json({ error: err.message });
     next(err);
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`=========================================`);
-    console.log(`🌐 Xerox Customer Portal: http://localhost:${PORT}`);
-    console.log(`⚙️  Admin Dashboard:      http://localhost:${PORT}/admin.html`);
-    console.log(`🔑 Admin Password:        ${ADMIN_PASSWORD}`);
+    console.log(`🌐 Customer Portal: http://localhost:${PORT}`);
+    console.log(`⚙️  Admin Dashboard: http://localhost:${PORT}/admin.html`);
+    console.log(`🔑 Admin Password:  ${ADMIN_PASSWORD}`);
     console.log(`=========================================`);
 });
