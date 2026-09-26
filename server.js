@@ -256,7 +256,7 @@ app.post('/api/admin/reprint', (req, res) => {
     const { pickupCode } = req.body;
     const job = Object.values(global.printJobs).find(j => j.pickupCode === pickupCode);
     if (job) {
-        printDocument(job.filePath).then(success => {
+        printDocument(job.filePath, job.pickupCode).then(success => {
             job.status = success ? 'printing_completed' : 'print_queued';
         });
         res.json({ success: true });

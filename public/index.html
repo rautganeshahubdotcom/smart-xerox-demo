@@ -463,7 +463,7 @@
                 tempId,
                 colorMode: document.querySelector('input[name="colorMode"]:checked').value,
                 paperSize: document.getElementById('paperSize').value,
-                copies: Math.min(Math.max(parseInt(document.getElementById('copies').value) || 1, 1), 50),
+                copies: Math.min(Math.max(parseInt(document.getElementById('copies').value) || 1, 50), 50),
                 sides: document.querySelector('input[name="sides"]:checked').value
             };
             try {
