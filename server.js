@@ -9,6 +9,12 @@ const pdfParse = require('pdf-parse');
 const Razorpay = require('razorpay');
 const { printDocument } = require('./services/printer');
 
+// ==========================================
+// CRASH PROTECTION (Prevents "Failed to fetch")
+// ==========================================
+process.on('uncaughtException', (err) => console.error('Uncaught Exception:', err));
+process.on('unhandledRejection', (err) => console.error('Unhandled Rejection:', err));
+
 // Ensure downloads directory exists
 const downloadsDir = path.join(__dirname, 'downloads');
 if (!fs.existsSync(downloadsDir)) fs.mkdirSync(downloadsDir);
@@ -108,7 +114,7 @@ app.post('/api/upload', upload.single('document'), async (req, res) => {
     if (req.file.mimetype === 'application/pdf') {
         try {
             const dataBuffer = fs.readFileSync(req.file.path);
-            const data = await pdfParse(dataBuffer);
+            const data = await pdfParse(dataBuffer, { max: 1 });
             pageCount = data.numpages || 1;
         } catch (e) {
             console.error("Error parsing PDF pages:", e.message);
