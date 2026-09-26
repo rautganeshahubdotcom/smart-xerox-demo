@@ -479,24 +479,29 @@
                     description: 'Print Order',
                     order_id: order.order_id,
                     handler: async function (response) {
-                        payBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Verifying...';
-                        const verifyRes = await fetch('/api/verify-payment', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                razorpay_order_id: response.razorpay_order_id,
-                                razorpay_payment_id: response.razorpay_payment_id,
-                                razorpay_signature: response.razorpay_signature
-                            })
-                        });
-                        const verify = await verifyRes.json();
-                        if (verify.success) {
-                            pickupCodeDisplay.textContent = verify.pickupCode;
-                            step2.classList.add('hidden');
-                            step3.classList.remove('hidden');
-                            setActiveStep(3);
-                        } else {
-                            showToast('Payment verification failed.', true);
+                        try {
+                            payBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Verifying...';
+                            const verifyRes = await fetch('/api/verify-payment', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    razorpay_order_id: response.razorpay_order_id,
+                                    razorpay_payment_id: response.razorpay_payment_id,
+                                    razorpay_signature: response.razorpay_signature
+                                })
+                            });
+                            const verify = await verifyRes.json();
+                            if (verify.success) {
+                                pickupCodeDisplay.textContent = verify.pickupCode;
+                                step2.classList.add('hidden');
+                                step3.classList.remove('hidden');
+                                setActiveStep(3);
+                            } else {
+                                showToast(verify.message || 'Payment verification failed.', true);
+                                resetBtn();
+                            }
+                        } catch (err) {
+                            showToast('Server error during verification. Please try again.', true);
                             resetBtn();
                         }
                     },
