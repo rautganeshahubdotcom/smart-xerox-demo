@@ -5,7 +5,7 @@ const path = require('path');
 const cors = require('cors');
 const crypto = require('crypto');
 const fs = require('fs');
-const pdfParse = require('pdf-parse');
+const { PDFDocument } = require('pdf-lib');
 const Razorpay = require('razorpay');
 const { printDocument } = require('./services/printer');
 
@@ -113,9 +113,9 @@ app.post('/api/upload', upload.single('document'), async (req, res) => {
     let pageCount = 1;
     if (req.file.mimetype === 'application/pdf') {
         try {
-            const dataBuffer = fs.readFileSync(req.file.path);
-            const data = await pdfParse(dataBuffer, { max: 1 });
-            pageCount = data.numpages || 1;
+            const dataBuffer = await fs.promises.readFile(req.file.path);
+            const pdfDoc = await PDFDocument.load(dataBuffer, { ignoreEncryption: true });
+            pageCount = pdfDoc.getPageCount();
         } catch (e) {
             console.error("Error parsing PDF pages:", e.message);
         }
