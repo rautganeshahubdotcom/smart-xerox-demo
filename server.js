@@ -33,7 +33,7 @@ function rateLimiter(req, res, next) {
     const now = Date.now();
     if (!requestCounts[ip]) requestCounts[ip] = [];
     requestCounts[ip] = requestCounts[ip].filter(t => now - t < 60000);
-    if (requestCounts[ip].length > 30) {
+    if (requestCounts[ip].length > 300) {
         return res.status(429).json({ error: 'Too many requests. Please wait a moment.' });
     }
     requestCounts[ip].push(now);
