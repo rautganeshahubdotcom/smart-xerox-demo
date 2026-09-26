@@ -55,10 +55,10 @@ app.use('/api/admin/', (req, res, next) => {
 // Serve frontend
 app.use(express.static(path.join(__dirname, 'public')));
 
-// File upload with size limit (10MB max)
+// File upload with size limit (50MB max)
 const upload = multer({
     dest: 'downloads/',
-    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
     fileFilter: (req, file, cb) => {
         const allowed = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
         if (allowed.includes(file.mimetype)) {
@@ -262,7 +262,7 @@ app.post('/api/admin/reprint', (req, res) => {
 // Error handler
 app.use((err, req, res, next) => {
     if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
-        return res.status(400).json({ error: 'File too large. Max 10MB.' });
+        return res.status(400).json({ error: 'File too large. Max 50MB.' });
     }
     if (err.message) return res.status(400).json({ error: err.message });
     next(err);

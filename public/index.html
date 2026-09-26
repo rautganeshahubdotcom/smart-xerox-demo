@@ -397,8 +397,8 @@
         // ---------- File handling ----------
         async function handleFile(file) {
             if (!file) return;
-            if (file.size > 10 * 1024 * 1024) {
-                uploadError.textContent = 'File too large (max 10 MB).';
+            if (file.size > 50 * 1024 * 1024) {
+                uploadError.textContent = 'File too large (max 50 MB).';
                 uploadError.classList.remove('hidden');
                 return;
             }
