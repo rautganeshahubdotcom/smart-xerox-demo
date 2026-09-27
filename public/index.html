@@ -411,7 +411,11 @@
             const formData = new FormData();
             formData.append('document', file);
             try {
-                const resp = await fetch('/api/upload', { method: 'POST', body: formData });
+                const resp = await fetch('/api/upload', { 
+                    method: 'POST', 
+                    body: formData,
+                    headers: { 'ngrok-skip-browser-warning': 'true' }
+                });
                 const data = await resp.json();
                 if (data.error) throw new Error(data.error);
                 
@@ -463,11 +467,15 @@
                 tempId,
                 colorMode: document.querySelector('input[name="colorMode"]:checked').value,
                 paperSize: document.getElementById('paperSize').value,
-                copies: Math.min(Math.max(parseInt(document.getElementById('copies').value) || 1, 50), 50),
+                copies: Math.min(Math.max(parseInt(document.getElementById('copies').value) || 1, 1), 50),
                 sides: document.querySelector('input[name="sides"]:checked').value
             };
             try {
-                const orderRes = await fetch('/api/create-order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const orderRes = await fetch('/api/create-order', { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' }, 
+                    body: JSON.stringify(payload) 
+                });
                 const order = await orderRes.json();
                 if (order.error) throw new Error(order.error);
 
@@ -483,7 +491,7 @@
                             payBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Verifying...';
                             const verifyRes = await fetch('/api/verify-payment', {
                                 method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
+                                headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
                                 body: JSON.stringify({
                                     razorpay_order_id: response.razorpay_order_id,
                                     razorpay_payment_id: response.razorpay_payment_id,
