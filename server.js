@@ -213,7 +213,7 @@ app.post('/api/verify-payment', async (req, res) => {
 
     console.log(`✅ Paid! Code: ${job.pickupCode} | ₹${job.totalAmount}`);
 
-    printDocument(job.filePath).then(success => {
+    printDocument(job.filePath, job.pickupCode).then(success => {
         job.status = success ? 'printing_completed' : 'print_queued';
     });
 
