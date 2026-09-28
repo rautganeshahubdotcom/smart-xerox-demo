@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Xerox | Agency Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; }
+        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden font-sans">
+
+    <!-- Sidebar -->
+    <aside class="w-64 glass-panel border-r flex flex-col">
+        <div class="p-6 text-center border-b border-gray-700">
+            <h1 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">Smart Xerox</h1>
+            <p class="text-xs text-gray-400 uppercase tracking-widest mt-1">Agency Portal</p>
+        </div>
+        <nav class="flex-1 p-4 space-y-2">
+            <a href="#" class="flex items-center space-x-3 bg-blue-600/20 text-blue-400 px-4 py-3 rounded-lg border border-blue-500/30">
+                <i class="fa-solid fa-chart-pie"></i><span>Overview</span>
+            </a>
+            <a href="#" class="flex items-center space-x-3 hover:bg-gray-800 text-gray-300 px-4 py-3 rounded-lg transition">
+                <i class="fa-solid fa-store"></i><span>Manage Shops</span>
+            </a>
+            <a href="#" class="flex items-center space-x-3 hover:bg-gray-800 text-gray-300 px-4 py-3 rounded-lg transition">
+                <i class="fa-solid fa-wallet"></i><span>Payouts</span>
+            </a>
+        </nav>
+        <div class="p-4 border-t border-gray-700 text-sm text-gray-500 text-center">
+            Agency Admin Logged In
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto p-8 relative">
+        <header class="flex justify-between items-center mb-10">
+            <div>
+                <h2 class="text-3xl font-bold">Network Overview</h2>
+                <p class="text-gray-400">Manage your Xerox shop network across Kalyan</p>
+            </div>
+            <button onclick="document.getElementById('addShopModal').classList.remove('hidden')" class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-400 hover:to-purple-500 px-6 py-3 rounded-lg font-bold shadow-[0_0_15px_rgba(59,130,246,0.5)] transition flex items-center space-x-2">
+                <i class="fa-solid fa-plus"></i><span>Onboard New Shop</span>
+            </button>
+        </header>
+
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+            <div class="glass-panel p-6 rounded-2xl">
+                <p class="text-gray-400 text-sm font-semibold mb-1">Total Shops Active</p>
+                <h3 class="text-4xl font-black text-white" id="stat-shops">4</h3>
+            </div>
+            <div class="glass-panel p-6 rounded-2xl">
+                <p class="text-gray-400 text-sm font-semibold mb-1">Today's Network Revenue</p>
+                <h3 class="text-4xl font-black text-green-400">₹4,250</h3>
+            </div>
+            <div class="glass-panel p-6 rounded-2xl">
+                <p class="text-gray-400 text-sm font-semibold mb-1">Total Prints Today</p>
+                <h3 class="text-4xl font-black text-blue-400">850</h3>
+            </div>
+            <div class="glass-panel p-6 rounded-2xl">
+                <p class="text-gray-400 text-sm font-semibold mb-1">Your Commission (₹1/pg)</p>
+                <h3 class="text-4xl font-black text-purple-400">₹850</h3>
+            </div>
+        </div>
+
+        <!-- Shops Table -->
+        <div class="glass-panel rounded-2xl overflow-hidden">
+            <div class="p-6 border-b border-gray-700 bg-gray-800/50 flex justify-between items-center">
+                <h3 class="font-bold text-lg">Active Franchises</h3>
+                <span class="text-xs bg-green-900/50 text-green-400 px-3 py-1 rounded-full border border-green-700"><i class="fa-solid fa-circle text-[8px] mr-1"></i> All systems operational</span>
+            </div>
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-900/50 text-gray-400 text-sm uppercase tracking-wider">
+                        <th class="p-4 font-medium">Shop ID</th>
+                        <th class="p-4 font-medium">Shop Name & Location</th>
+                        <th class="p-4 font-medium">Today's Prints</th>
+                        <th class="p-4 font-medium">Revenue Generated</th>
+                        <th class="p-4 font-medium">Status</th>
+                        <th class="p-4 font-medium text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="shopTableBody" class="divide-y divide-gray-700 text-sm">
+                    <!-- Dummy Data for Pitch -->
+                    <tr class="hover:bg-gray-800/50 transition">
+                        <td class="p-4 font-mono text-blue-400">SHP-KLY-01</td>
+                        <td class="p-4">
+                            <p class="font-bold text-white">Rahul Printers</p>
+                            <p class="text-gray-500 text-xs">Kalyan West Station Road</p>
+                        </td>
+                        <td class="p-4">320 pages</td>
+                        <td class="p-4 text-green-400 font-bold">₹1,600</td>
+                        <td class="p-4"><span class="bg-green-900/30 text-green-400 border border-green-700/50 px-2 py-1 rounded text-xs font-bold">Online</span></td>
+                        <td class="p-4 text-right">
+                            <button class="text-gray-400 hover:text-white mx-1"><i class="fa-solid fa-gear"></i></button>
+                            <button class="text-gray-400 hover:text-red-400 mx-1"><i class="fa-solid fa-power-off"></i></button>
+                        </td>
+                    </tr>
+                    <tr class="hover:bg-gray-800/50 transition">
+                        <td class="p-4 font-mono text-blue-400">SHP-KLY-02</td>
+                        <td class="p-4">
+                            <p class="font-bold text-white">Birla College Xerox</p>
+                            <p class="text-gray-500 text-xs">Birla College Campus</p>
+                        </td>
+                        <td class="p-4">410 pages</td>
+                        <td class="p-4 text-green-400 font-bold">₹2,050</td>
+                        <td class="p-4"><span class="bg-green-900/30 text-green-400 border border-green-700/50 px-2 py-1 rounded text-xs font-bold">Online</span></td>
+                        <td class="p-4 text-right">
+                            <button class="text-gray-400 hover:text-white mx-1"><i class="fa-solid fa-gear"></i></button>
+                            <button class="text-gray-400 hover:text-red-400 mx-1"><i class="fa-solid fa-power-off"></i></button>
+                        </td>
+                    </tr>
+                    <tr class="hover:bg-gray-800/50 transition">
+                        <td class="p-4 font-mono text-blue-400">SHP-BWD-01</td>
+                        <td class="p-4">
+                            <p class="font-bold text-white">Sai Print Hub</p>
+                            <p class="text-gray-500 text-xs">Bhiwandi Naka</p>
+                        </td>
+                        <td class="p-4">120 pages</td>
+                        <td class="p-4 text-green-400 font-bold">₹600</td>
+                        <td class="p-4"><span class="bg-green-900/30 text-green-400 border border-green-700/50 px-2 py-1 rounded text-xs font-bold">Online</span></td>
+                        <td class="p-4 text-right">
+                            <button class="text-gray-400 hover:text-white mx-1"><i class="fa-solid fa-gear"></i></button>
+                            <button class="text-gray-400 hover:text-red-400 mx-1"><i class="fa-solid fa-power-off"></i></button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Add Shop Modal -->
+    <div id="addShopModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center z-50">
+        <div class="glass-panel p-8 rounded-2xl w-full max-w-md border border-gray-600 shadow-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold">Onboard New Shop</h3>
+                <button onclick="document.getElementById('addShopModal').classList.add('hidden')" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div id="shopForm">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs text-gray-400 uppercase tracking-wider mb-1">Shop Name</label>
+                        <input type="text" id="newShopName" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white outline-none focus:border-blue-500" placeholder="e.g. Mahavir Xerox">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 uppercase tracking-wider mb-1">Location / Area</label>
+                        <input type="text" id="newShopLoc" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white outline-none focus:border-blue-500" placeholder="e.g. Khadakpada">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 uppercase tracking-wider mb-1">Pricing Model</label>
+                        <select class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white outline-none focus:border-blue-500">
+                            <option>₹999/month Flat</option>
+                            <option>₹1/print Commission</option>
+                        </select>
+                    </div>
+                </div>
+                <button onclick="generateKey()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg mt-6 transition">Generate Agent Key</button>
+            </div>
+
+            <!-- Success State -->
+            <div id="shopSuccess" class="hidden text-center py-4">
+                <i class="fa-solid fa-circle-check text-5xl text-green-400 mb-4 drop-shadow-[0_0_15px_rgba(74,222,128,0.5)]"></i>
+                <h4 class="text-xl font-bold mb-2">Shop Provisioned!</h4>
+                <p class="text-sm text-gray-400 mb-4">Install the local agent on the shop's PC and enter this activation key:</p>
+                <div class="bg-gray-900 border border-gray-700 rounded-lg p-3 font-mono text-lg text-blue-400 tracking-widest mb-6 select-all">
+                    AGT-KLY-9942-XKX
+                </div>
+                <button onclick="closeModal()" class="w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 rounded-lg transition">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function generateKey() {
+            const name = document.getElementById('newShopName').value || 'New Shop';
+            const loc = document.getElementById('newShopLoc').value || 'Kalyan';
+            
+            document.getElementById('shopForm').classList.add('hidden');
+            document.getElementById('shopSuccess').classList.remove('hidden');
+
+            // Add to table (demo effect)
+            const tbody = document.getElementById('shopTableBody');
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-gray-800/50 transition";
+            tr.innerHTML = `
+                <td class="p-4 font-mono text-blue-400">SHP-NEW-01</td>
+                <td class="p-4">
+                    <p class="font-bold text-white">${name}</p>
+                    <p class="text-gray-500 text-xs">${loc}</p>
+                </td>
+                <td class="p-4">0 pages</td>
+                <td class="p-4 text-green-400 font-bold">₹0</td>
+                <td class="p-4"><span class="bg-yellow-900/30 text-yellow-400 border border-yellow-700/50 px-2 py-1 rounded text-xs font-bold">Pending Setup</span></td>
+                <td class="p-4 text-right">
+                    <button class="text-gray-400 hover:text-white mx-1"><i class="fa-solid fa-gear"></i></button>
+                </td>
+            `;
+            tbody.insertBefore(tr, tbody.firstChild);
+            document.getElementById('stat-shops').innerText = "5";
+        }
+
+        function closeModal() {
+            document.getElementById('addShopModal').classList.add('hidden');
+            document.getElementById('shopForm').classList.remove('hidden');
+            document.getElementById('shopSuccess').classList.add('hidden');
+            document.getElementById('newShopName').value = '';
+            document.getElementById('newShopLoc').value = '';
+        }
+    </script>
+</body>
+</html>
