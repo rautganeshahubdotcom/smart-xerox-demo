@@ -75,11 +75,14 @@ const upload = multer({
     }
 });
 
-// Initialize Razorpay
-const razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_KEY_SECRET
-});
+// Initialize Razorpay (only if keys are configured, so the portal still runs without them)
+let razorpay = null;
+if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+    razorpay = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET
+    });
+}
 
 // Global store for print jobs & lifetime stats
 global.printJobs = {};
@@ -145,6 +148,7 @@ app.post('/api/create-order', async (req, res) => {
 
     if (!job) return res.status(404).json({ error: 'Document session expired. Please upload again.' });
     if (job.razorpayOrderId) return res.status(400).json({ error: 'Payment already created.' });
+    if (!razorpay) return res.status(503).json({ error: 'Payments are not configured yet. Please add your Razorpay API keys.' });
 
     const pricePerPage = colorMode === 'color' ? 10 : 2;
     const totalCopies = Math.min(Math.max(parseInt(copies) || 1, 1), 50);
@@ -185,6 +189,10 @@ app.post('/api/verify-payment', async (req, res) => {
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
         return res.status(400).json({ success: false, message: 'Missing payment details.' });
+    }
+
+    if (!process.env.RAZORPAY_KEY_SECRET) {
+        return res.status(503).json({ success: false, message: 'Payments are not configured yet. Please add your Razorpay API keys.' });
     }
 
     const body = razorpay_order_id + "|" + razorpay_payment_id;

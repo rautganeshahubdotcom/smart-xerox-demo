@@ -4,3 +4,4 @@ downloads/
 ngrok.exe
 ngrok.log
 merged-*.pdf
+.env.local
