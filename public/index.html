@@ -2,8 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Smart Xerox – Live 3D Experience</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#3b82f6" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <title>Smart Xerox – Interactive Print Kiosk</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
@@ -256,7 +260,7 @@
                     <i class="fa-solid fa-file-arrow-up text-3xl text-blue-500 mb-2 drop-shadow-md"></i>
                     <span class="text-blue-900 font-extrabold">Upload</span>
                     <small class="text-xs text-blue-500 font-bold">PDF / JPG / PNG</small>
-                    <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg" class="hidden" />
+                    <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.heic,.heif" class="hidden" />
                 </button>
                 
                 <button id="btnCamera" class="flex flex-col items-center p-5 bg-white border-2 border-purple-100 rounded-2xl shadow-[0_6px_0_0_#e9d5ff,0_10px_15px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_0_0_#e9d5ff,0_5px_10px_rgba(0,0,0,0.1)] hover:translate-y-[2px] active:shadow-[0_0px_0_0_transparent] active:translate-y-[6px] transition-all" onclick="document.getElementById('cameraInput').click()">
@@ -452,7 +456,10 @@
                 step2.classList.remove('hidden');
                 setActiveStep(2);
             } catch (e) {
-                uploadError.textContent = e.message || 'Upload failed.';
+                const msg = e.message === 'Failed to fetch' 
+                    ? 'Connection error. Please check your internet and try again.' 
+                    : (e.message || 'Upload failed. Please try again.');
+                uploadError.textContent = msg;
                 uploadError.classList.remove('hidden');
             } finally {
                 uploadStatus.classList.add('hidden');
